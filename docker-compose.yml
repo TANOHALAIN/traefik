@@ -1,0 +1,51 @@
+version: "3.7"
+
+services:
+  traefik:
+    image: traefik:v2.2
+    container_name: traefik
+    restart: always
+    command:
+      - "--api=true"
+      - "--api.dashboard=true"
+      - "--api.debug=true"
+      - "--log.level=DEBUG"
+      - "--docker.domain=tanoh.co"
+      - "--docker.watch=true"
+      - "--loglevel=DEBUG"
+      - "--web=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--configFile=/traefik.yml" 
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - ./traefik.yml:/traefik.yml # Assurez-vous d'avoir un fichier de configuration traefik.toml valide
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    networks:
+      - webgateway
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.example.com`)" # Remplacez par votre nom de domaine
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$5Z3Z5Z3Z$$5Z3Z5Z3Z5Z3Z5Z3Z5" # Remplacez par votre mot de passe htpasswd
+      - "basicauth.users=admin:$$apr1$$5Z3Z5Z3Z$$5Z3Z5Z3Z5Z3Z5Z3Z5" # Remplacez par votre mot de passe htpasswd
+      - "traefik.http.middlewares.auth.basicauth.removeheader=true"
+
+    
+networks:
+  webgateway:
+    driver: bridge
+
+  

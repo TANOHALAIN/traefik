@@ -1,0 +1,51 @@
+# traefik.yml
+
+api:
+  dashboard: true
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+
+entryPoints:
+  web:
+    address: ":80"
+
+certificatesResolvers:
+  myresolver:
+    acme:
+      email: "alain@tanoh.co"
+      storage: "/etc/traefik/acme/acme.json"
+      httpChallenge:
+        entryPoint: "web"
+
+http:
+  routers:
+    portainer:
+      rule: "Host(`portainer.tanoh.co`)" # Règle d'itinéraire pour Portainer (remplacez par votre nom de domaine)
+      service: portainer-service
+
+    webmin:
+      rule: "Host(`webmin.tanoh.co`)" # Règle d'itinéraire pour Webmin (remplacez par votre nom de domaine)
+      service: webmin-service
+
+    heimdall:
+      rule: "Host(`heimdall.tanoh.co`)" # Règle d'itinéraire pour Heimdall (remplacez par votre nom de domaine)
+      service: heimdall-service
+
+  services:
+    portainer-service:
+      loadBalancer:
+        servers:
+          - url: "http://portainer-container:9443" # Nom du conteneur Portainer et port
+
+    webmin-service:
+      loadBalancer:
+        servers:
+          - url: "http://webmin-container:10000" # Nom du conteneur Webmin et port
+
+    heimdall-service:
+      loadBalancer:
+        servers:
+          - url: "http://heimdall-container:80" # Nom du conteneur Heimdall et port
